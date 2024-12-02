@@ -1,4 +1,4 @@
-import sys, fasta, profileHMM
+import sys, fasta, profileHMM, viterbi
 
 
 #### Main
@@ -22,6 +22,9 @@ if __name__ == "__main__":
     profile = profileHMM.Hmm(seedAlignL)
     emissionProbs = profile.emissions
     transitionProbs = profile.transitions
+    states = profile.states
+    
+
 
     # load db
     dbL = fasta.load(dbSeqFN)
@@ -30,7 +33,9 @@ if __name__ == "__main__":
     for hd,sseq in dbL:
 
         # some stuff to get score here!
-        score = 2
+        score, bestpath = viterbi.logOdds(sseq, 5, transitionProbs, emissionProbs, states)
+        print("The score is", score)
+        print("The best path is ", bestpath)
         outL.append((score,hd))
 
     outL.sort(reverse=True) # sort by score, high to low

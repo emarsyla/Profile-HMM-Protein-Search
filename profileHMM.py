@@ -1,6 +1,8 @@
 class Hmm:
     def __init__(self, alignment):
         self.transitions, self.emissions = self.makeProfile(alignment)
+        numMatches = self.getNumMatches(alignment)
+        self.states = self.getStates(numMatches)
 
     def getNumMatches(self, alignment):
         # Match state if > 50% of column is aligned
@@ -16,8 +18,6 @@ class Hmm:
                 numMatches += 1
         return numMatches
             
-
-
     def getTransitions(self, numMatches):
         possibleTransitions = []
         for i in range(numMatches + 1):
@@ -56,6 +56,14 @@ class Hmm:
                 posEmissions.append(emis + aa)
         return posEmissions
     
+    def getStates(self, numMatches):
+        states = ['B0', 'I0']
+        for i in range(numMatches):
+            states.append('M' + str(i+1))
+            states.append('D' + str(i+1))
+            states.append('I' + str(i+1))
+        states.append('E')
+        return states
                     
     def makeProfile(self, alignment):
         # List of amino acids
@@ -214,3 +222,4 @@ class Hmm:
 
 #alignment = ["IV..EN", "IV...D", "LSKYEN", "IS..PD", "I....D"]  
 #profileHMM = Hmm(alignment)
+#print(profileHMM.states)
