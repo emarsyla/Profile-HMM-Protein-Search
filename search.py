@@ -22,6 +22,7 @@ if __name__ == "__main__":
     profile = profileHMM.Hmm(seedAlignL)
     emissionProbs = profile.emissions
     transitionProbs = profile.transitions
+    posTrans = profile.posTransitions
     states = profile.states
     
 
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     for hd,sseq in dbL:
 
         # some stuff to get score here!
-        score, bestpath = viterbi.logOdds(sseq, 5, transitionProbs, emissionProbs, states)
+        score, bestpath = viterbi.logOdds(sseq, 5, transitionProbs, emissionProbs, states, posTrans)
         print("The score is", score)
         print("The best path is ", bestpath)
         outL.append((score,hd))

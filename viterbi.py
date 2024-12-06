@@ -6,7 +6,7 @@ import math, profileHMM, random
 #emisD = profile.emissions
 #states = profile.states
 
-def viterbi(protSeq, transD, emisD, states):
+def viterbi(protSeq, transD, emisD, states, posTrans):
     viterbi = {}
     backtrack = {}
     aa = protSeq[0]
@@ -17,25 +17,24 @@ def viterbi(protSeq, transD, emisD, states):
             emisProb = emisD[state+aa]
         else:
             emisProb = 1
-        viterbi[state][0] = math.log(0.1) * emisProb
+        viterbi[state][0] = math.log(0.1* emisProb)
         backtrack[state][0] = '-'
     for i in range(1,len(protSeq)):
         aa = protSeq[i]
         for curstate in states:
+            possibleTrans = posTrans[curstate]
             maxProb = -float('inf')
             bestTrans = ''
-            #probs = []
-            for prevstate in states:
-                if prevstate+curstate in transD.keys():
-                    if curstate+aa in emisD.keys():
-                        emisProb = emisD[curstate+aa]
-                    else:
-                        emisProb = 1
-                    
-                    prob = viterbi[prevstate][i-1] + math.log(transD[prevstate+curstate]*emisProb)
-                    if prob>maxProb:
-                        maxProb = prob
-                        bestTrans = prevstate
+            for prevstate in possibleTrans:
+                if curstate+aa in emisD:
+                    emisProb = emisD[curstate+aa]
+                else:
+                    emisProb = 1
+                
+                prob = viterbi[prevstate][i-1] + math.log(transD[prevstate+'>'+curstate]*emisProb)
+                if prob>maxProb:
+                    maxProb = prob
+                    bestTrans = prevstate
             viterbi[curstate][i] = maxProb
             backtrack[curstate][i] = bestTrans
     finalProbs = []
@@ -59,17 +58,14 @@ def getBacktrack(protSeq, backtrack, viterbi, states):
         prevState = backtrack[prevState][length - i - 2]
     return stateSeq
         
-def logOdds(protSeq, reps, transD, emisD, states):
-    realScore, backtrack, viter = viterbi(protSeq, transD, emisD, states)
+def logOdds(protSeq, reps, transD, emisD, states, posTrans):
+    realScore, backtrack, viter = viterbi(protSeq, transD, emisD, states, posTrans)
     bestPath = getBacktrack(protSeq, backtrack, viter, states)
     scores = []
     for i in range(reps):
         shuffled = ''
         shuffled = shuffled.join(random.sample(protSeq, len(protSeq)))
-        score, _, _ = viterbi(shuffled, transD, emisD, states)
+        score, vit, back = viterbi(shuffled, transD, emisD, states, posTrans)
         scores.append(score)
     final = realScore - (sum(scores)/reps)
     return final, bestPath
-
-#score = viterbi(protSeq, transD, emisD, states)
-#print(score)

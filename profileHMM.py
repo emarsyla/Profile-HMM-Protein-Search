@@ -1,8 +1,9 @@
 class Hmm:
     def __init__(self, alignment):
-        self.transitions, self.emissions = self.makeProfile(alignment)
         numMatches = self.getNumMatches(alignment)
         self.states = self.getStates(numMatches)
+        self.transitions, self.emissions, self.posTransitions = self.makeProfile(alignment, self.states)
+
 
     def getNumMatches(self, alignment):
         # Match state if > 50% of column is aligned
@@ -64,8 +65,17 @@ class Hmm:
             states.append('I' + str(i+1))
         states.append('E')
         return states
+    
+    def getPossibleTransitions(self, transitionsProbs, allstates):
+        posTrans = {state: [] for state in allstates}
+        for transition in transitionsProbs.keys():
+            prevstate = transition.split('>')[0]
+            curstate = transition.split('>')[1]
+            posTrans[curstate].append((prevstate))
+        return posTrans
+
                     
-    def makeProfile(self, alignment):
+    def makeProfile(self, alignment, allstates):
         # List of amino acids
         aalist = ['G', 'P', 'A', 'V', 'L', 'I', 'M', 'C', 'F', 'Y', 'W', 'H', 'K', 'R', 'Q', "N", 'E', 'D', 'S', 'T']
         insertEmisList = []
@@ -117,15 +127,18 @@ class Hmm:
                 
                 for first in [prevM, prevI, prevD]:
                     for second in [curM, curI]:
-                        trans = first + second
+                        trans = first + ">" + second
                         if 'DNE' not in trans:
+                            #print(posTrans[second])
+                            #posTrans[second] = posTrans[second].append(first)
                             possibleTransitions.append(trans)
                 
                 # Find transition probabilities
                 numStatesToTransTo = 2
                 for transition in possibleTransitions:
-                    init = transition[:2]
-                    newList = [trans for trans in transitions if (trans[:2] == init)]
+                    #init = transition[:2]
+                    init = transition.split('>')[0]
+                    newList = [trans for trans in transitions if (trans.split('>')[0] == init)]
                     countTransSpecState = newList.count(transition) + 1
                     countTransAnyState = len(newList) + numStatesToTransTo
                     transitionsProbs[transition] = countTransSpecState/countTransAnyState
@@ -166,9 +179,9 @@ class Hmm:
                     for i in range(numAligned):
                         if prevStates[i] == curStates[i]:
                             if 'I' in prevStates[i] and 'I' in curStates[i]:
-                                transitions.append(prevStates[i] + curStates[i])
+                                transitions.append(prevStates[i] + '>' + curStates[i])
                         else:
-                            transitions.append(prevStates[i] + curStates[i])
+                            transitions.append(prevStates[i] + '>' + curStates[i])
 
                     # Get all possible transitions
                     possibleTransitions = []
@@ -183,15 +196,18 @@ class Hmm:
                         prevD = 'DNE'
                     for first in [prevM, prevI, prevD]:
                         for second in [curM, curI, curD]:
-                            trans = first + second
+                            trans = first + '>' + second
                             if 'DNE' not in trans:
+                                #print(posTrans[second])
+                                #print(second)
+                                #posTrans[second] = posTrans[second].append(first)
                                 possibleTransitions.append(trans)
                     
                     # Find transition probabilities
                     numStatesToTransTo = 3
                     for transition in possibleTransitions:
-                        init = transition[:2]
-                        newList = [trans for trans in transitions if (trans[:2] == init)]
+                        init = transition.split('>')[0]
+                        newList = [trans for trans in transitions if (trans.split('>')[0] == init)]
                         countTransSpecState = newList.count(transition) + 1
                         countTransAnyState = len(newList) + numStatesToTransTo
                         transitionsProbs[transition] = countTransSpecState/countTransAnyState
@@ -211,15 +227,19 @@ class Hmm:
                     for i in range(numAligned):
                         if prevStates[i] == curStates[i]:
                             if 'I' in prevStates[i] and 'I' in curStates[i]:
-                                transitions.append(prevStates[i] + curStates[i])
+                                transitions.append(prevStates[i] + '>' + curStates[i])
                         else:
-                            transitions.append(prevStates[i] + curStates[i])
+                            transitions.append(prevStates[i] + '>' + curStates[i])
             seqPos += 1
-        return transitionsProbs, emissionsProbs
+        posTrans = self.getPossibleTransitions(transitionsProbs, allstates)
+        return transitionsProbs, emissionsProbs, posTrans
             
+    
+
                 
 
 
 #alignment = ["IV..EN", "IV...D", "LSKYEN", "IS..PD", "I....D"]  
 #profileHMM = Hmm(alignment)
-#print(profileHMM.states)
+#print(profileHMM.transitions)
+#print(profileHMM.emissions)
